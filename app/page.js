@@ -2,7 +2,7 @@
 
 export default function Home() { const [className, setClassName] = useState(""); const [subjectCount, setSubjectCount] = useState(""); const [started, setStarted] = useState(false);
 
-const [name, setName] = useState(""); const [roll, setRoll] = useState(""); const [searchRoll, setSearchRoll] = useState("");
+const [name, setName] = useState(""); const [roll, setRoll] = useState("");
 
 const [currentMarks, setCurrentMarks] = useState([]); const [students, setStudents] = useState([]);
 
@@ -52,8 +52,6 @@ setRoll("");
 setCurrentMarks(Array(Number(subjectCount)).fill(""));
 
 };
-
-const searchStudent = () => { const index = students.findIndex((s) => String(s.roll) === String(searchRoll)); if (index === -1) { alert("Student not found"); } else { setViewIndex(index); } };
 
 const stats = () => { if (students.length === 0) return null;
 
@@ -119,18 +117,25 @@ return ( <div style={{ padding: 20, color: "white", background: "linear-gradient
         <button onClick={submitStudent}>Add Student</button>
       </div>
 
-      {/* SEARCH */}
-      <div style={{ marginTop: 15, padding: 10, background: "#0b1220", borderRadius: 10 }}>
-        <h3>Search Student</h3>
-        <input
-          placeholder="Enter Roll"
-          value={searchRoll}
-          onChange={(e) => setSearchRoll(e.target.value)}
-        />
-        <button onClick={searchStudent}>Search</button>
-      </div>
+      {/* SELECT STUDENT BY ROLL */}
+      {students.length > 0 && (
+        <div style={{ marginTop: 15, padding: 10, background: "#0b1220", borderRadius: 10 }}>
+          <h3>Select Student (by Roll)</h3>
 
-      {/* INDIVIDUAL RESULT */}
+          <select
+            onChange={(e) => setViewIndex(Number(e.target.value))}
+            style={{ padding: 8, width: "100%" }}
+          >
+            {students.map((s, i) => (
+              <option key={s.id} value={i}>
+                Roll: {s.roll} - {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* INDIVIDUAL RESULT (ONLY ONE BOX) */}
       <div style={{ marginTop: 20, padding: 15, background: "#0b1220", borderRadius: 10 }}>
         <h2>Individual Result</h2>
 
@@ -145,11 +150,6 @@ return ( <div style={{ padding: 20, color: "white", background: "linear-gradient
         ) : (
           <p>No student selected</p>
         )}
-
-        <div style={{ marginTop: 10 }}>
-          <button disabled={viewIndex <= 0} onClick={() => setViewIndex(viewIndex - 1)}>Prev</button>
-          <button disabled={viewIndex >= students.length - 1} onClick={() => setViewIndex(viewIndex + 1)}>Next</button>
-        </div>
       </div>
 
       {/* SUMMARY */}
