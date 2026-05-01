@@ -2,6 +2,8 @@
 
 export default function Home() { const [className, setClassName] = useState(""); const [subjectCount, setSubjectCount] = useState(""); const [started, setStarted] = useState(false);
 
+const [name, setName] = useState(""); const [roll, setRoll] = useState("");
+
 const [currentMarks, setCurrentMarks] = useState([]); const [students, setStudents] = useState([]);
 
 const getGP = (m) => { if (m >= 80) return 5.0; else if (m >= 70) return 4.0; else if (m >= 60) return 3.5; else if (m >= 50) return 3.0; else if (m >= 40) return 2.0; else if (m >= 33) return 1.0; else return 0.0; };
@@ -12,7 +14,11 @@ const start = () => { if (!className || !subjectCount) return alert("Fill all fi
 
 const updateMark = (i, val) => { const copy = [...currentMarks]; copy[i] = val; setCurrentMarks(copy); };
 
-const submitStudent = () => { let fail = false; let total = 0; let gpSum = 0;
+const submitStudent = () => { if (!name || !roll) return alert("Enter name and roll");
+
+let fail = false;
+let total = 0;
+let gpSum = 0;
 
 const marksNum = currentMarks.map((m) => Number(m));
 
@@ -26,6 +32,8 @@ const gpa = fail ? 0 : gpSum / marksNum.length;
 
 const student = {
   id: Date.now(),
+  name,
+  roll,
   marks: marksNum,
   total,
   gpa: Number(gpa.toFixed(2)),
@@ -34,6 +42,9 @@ const student = {
 };
 
 setStudents([...students, student]);
+
+setName("");
+setRoll("");
 setCurrentMarks(Array(Number(subjectCount)).fill(""));
 
 };
@@ -47,16 +58,23 @@ const avg = students.reduce((a, b) => a + b.gpa, 0) / students.length;
 const pass = students.filter((s) => s.status === "PASS").length;
 const fail = students.length - pass;
 
-const gradeCount = (g) => students.filter((s) => s.grade === g).length;
+const count = (g) => students.filter((s) => s.grade === g).length;
+
+const passPercent = ((pass / students.length) * 100).toFixed(2);
 
 return {
   sorted,
   avg: avg.toFixed(2),
   pass,
   fail,
-  aPlus: gradeCount("A+"),
-  a: gradeCount("A"),
-  aMinus: gradeCount("A-"),
+  passPercent,
+  aPlus: count("A+"),
+  a: count("A"),
+  aMinus: count("A-"),
+  b: count("B"),
+  c: count("C"),
+  d: count("D"),
+  f: count("F"),
 };
 
 };
@@ -88,7 +106,21 @@ return ( <div style={{ padding: 20, color: "white", background: "#0f172a", minHe
     <div>
       <h2>{className}</h2>
 
-      <h3>Enter Marks</h3>
+      <h3>Student Info</h3>
+
+      <input
+        placeholder="Student Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <input
+        placeholder="Roll"
+        value={roll}
+        onChange={(e) => setRoll(e.target.value)}
+      />
+
+      <h3>Marks</h3>
 
       {currentMarks.map((m, i) => (
         <div key={i}>
@@ -110,7 +142,7 @@ return ( <div style={{ padding: 20, color: "white", background: "#0f172a", minHe
 
       {students.map((s, i) => (
         <div key={s.id} style={{ border: "1px solid gray", padding: 10, marginBottom: 10 }}>
-          <h4>Student #{i + 1}</h4>
+          <h4>{s.name} (Roll: {s.roll})</h4>
           <p>Total Marks: {s.total}</p>
           <p>GPA: {s.gpa}</p>
           <p>Grade: {s.grade}</p>
@@ -126,13 +158,16 @@ return ( <div style={{ padding: 20, color: "white", background: "#0f172a", minHe
 
           <p>Average GPA: {data.avg}</p>
           <p>Passed: {data.pass} | Failed: {data.fail}</p>
+          <p>Pass Percentage: {data.passPercent}%</p>
 
+          <h3>Grade Count</h3>
           <p>A+: {data.aPlus} | A: {data.a} | A-: {data.aMinus}</p>
+          <p>B: {data.b} | C: {data.c} | D: {data.d} | F: {data.f}</p>
 
           <h3>Merit List</h3>
           {data.sorted.map((s, i) => (
             <div key={s.id}>
-              #{i + 1} → GPA {s.gpa} ({s.grade})
+              #{i + 1} → {s.name} (Roll: {s.roll}) → GPA {s.gpa} ({s.grade})
             </div>
           ))}
         </div>
