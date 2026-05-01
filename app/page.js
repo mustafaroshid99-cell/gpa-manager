@@ -6,6 +6,8 @@ const [name, setName] = useState(""); const [roll, setRoll] = useState("");
 
 const [searchRoll, setSearchRoll] = useState(""); const [error, setError] = useState("");
 
+const [showMerit, setShowMerit] = useState(false);
+
 const [currentMarks, setCurrentMarks] = useState([]); const [students, setStudents] = useState([]);
 
 const [viewIndex, setViewIndex] = useState(-1);
@@ -34,8 +36,47 @@ const submitStudent = () => { setError("");
 
 if (!name || !roll) return setError("Enter name and roll");
 
-if (students.find(s => String(s.roll) === String(roll))) {
-  return setError("Student already exists (duplicate roll)");
+const existingIndex = students.findIndex(s => String(s.roll) === String(roll));
+
+if (existingIndex !== -1) {
+  const confirmChange = confirm("This student already exists. Do you want to change his marks?");
+
+  if (!confirmChange) return;
+
+  const updatedStudents = [...students];
+
+  let fail = false;
+  let total = 0;
+  let gpSum = 0;
+
+  const marksNum = currentMarks.map(m => Number(m));
+
+  for (let m of marksNum) {
+    if (m < 0 || m > 100) return setError("Marks must be 0-100");
+    if (m < 33) fail = true;
+    total += m;
+    gpSum += getGP(m);
+  }
+
+  const gpa = fail ? 0 : gpSum / marksNum.length;
+
+  updatedStudents[existingIndex] = {
+    ...updatedStudents[existingIndex],
+    name,
+    marks: marksNum,
+    total,
+    gpa: Number(gpa.toFixed(2)),
+    grade: getGrade(gpa),
+    status: fail ? "FAIL" : "PASS"
+  };
+
+  setStudents(updatedStudents);
+  setViewIndex(existingIndex);
+
+  setName("");
+  setRoll("");
+  setCurrentMarks(Array(Number(subjectCount)).fill(""));
+  return;
 }
 
 let fail = false;
@@ -45,9 +86,7 @@ let gpSum = 0;
 const marksNum = currentMarks.map(m => Number(m));
 
 for (let m of marksNum) {
-  if (m < 0 || m > 100) {
-    return setError("Marks must be between 0 and 100");
-  }
+  if (m < 0 || m > 100) return setError("Marks must be 0-100");
   if (m < 33) fail = true;
   total += m;
   gpSum += getGP(m);
@@ -119,11 +158,7 @@ return ( <div style={{padding:20,background:"#0f172a",color:"white",minHeight:"1
   ) : (
     <div>
 
-      {error && (
-        <div style={{color:"red",marginBottom:10,fontWeight:"bold"}}>
-          ⚠ {error}
-        </div>
-      )}
+      {error && <div style={{color:"red",fontWeight:"bold"}}>{error}</div>}
 
       {/* INPUT */}
       <div style={{padding:10,background:"#111827",borderRadius:10}}>
@@ -143,7 +178,7 @@ return ( <div style={{padding:20,background:"#0f172a",color:"white",minHeight:"1
       {/* SEARCH */}
       <div style={{marginTop:15,padding:10,background:"#0b1220",borderRadius:10}}>
         <h3>Search by Roll</h3>
-        <input value={searchRoll} onChange={e=>setSearchRoll(e.target.value)} placeholder="Enter roll" />
+        <input value={searchRoll} onChange={e=>setSearchRoll(e.target.value)} />
         <button onClick={searchStudent}>Search</button>
       </div>
 
@@ -151,7 +186,7 @@ return ( <div style={{padding:20,background:"#0f172a",color:"white",minHeight:"1
       <div style={{marginTop:20,padding:15,background:"#0b1220",borderRadius:10}}>
         <h2>Individual Result</h2>
         {current ? (
-          <div style={{transition:"all 0.4s ease"}}>
+          <div>
             <h3>{current.name} (Roll {current.roll})</h3>
             <p>Total: {current.total}</p>
             <p>GPA: {current.gpa}</p>
@@ -172,33 +207,42 @@ return ( <div style={{padding:20,background:"#0f172a",color:"white",minHeight:"1
         </div>
       )}
 
-      {/* MERIT */}
-      <div style={{marginTop:20,padding:15,background:"#0b1220",borderRadius:10}}>
-        <h2>🏆 Merit List</h2>
-
-        <table style={{width:"100%",borderCollapse:"collapse",animation:"fadeIn 0.5s ease"}}>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Name</th>
-              <th>Roll</th>
-              <th>GPA</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {merit.map(s=> (
-              <tr key={s.id} style={{transition:"all 0.3s ease"}}>
-                <td>{s.rank}</td>
-                <td>{s.name}</td>
-                <td>{s.roll}</td>
-                <td>{s.gpa}</td>
-                <td>{s.total}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* MERIT BUTTON */}
+      <div style={{marginTop:20}}>
+        <button onClick={()=>setShowMerit(!showMerit)}>
+          Ranks / Merit Table
+        </button>
       </div>
+
+      {/* MERIT TABLE */}
+      {showMerit && (
+        <div style={{marginTop:15,padding:15,background:"#0b1220",borderRadius:10}}>
+          <h2>🏆 Merit List</h2>
+
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Roll</th>
+                <th>GPA</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {merit.map(s=> (
+                <tr key={s.id}>
+                  <td>{s.rank}</td>
+                  <td>{s.name}</td>
+                  <td>{s.roll}</td>
+                  <td>{s.gpa}</td>
+                  <td>{s.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
     </div>
   )}
