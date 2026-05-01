@@ -4,7 +4,7 @@ export default function Home() { const [className, setClassName] = useState("");
 
 const [name, setName] = useState(""); const [roll, setRoll] = useState("");
 
-const [searchRoll, setSearchRoll] = useState("");
+const [searchRoll, setSearchRoll] = useState(""); const [error, setError] = useState("");
 
 const [currentMarks, setCurrentMarks] = useState([]); const [students, setStudents] = useState([]);
 
@@ -16,21 +16,42 @@ const getGrade = (gpa) => { if (gpa === 5.0) return "A+"; else if (gpa >= 4.0) r
 
 const start = () => { if (!className || !subjectCount) return alert("Fill all fields"); setCurrentMarks(Array(Number(subjectCount)).fill("")); setStarted(true); };
 
-const updateMark = (i, val) => { const copy = [...currentMarks]; copy[i] = val; setCurrentMarks(copy); };
+const updateMark = (i, val) => { const num = Number(val);
 
-const submitStudent = () => { if (!name || !roll) return alert("Enter name and roll");
+if (val !== "" && (num < 0 || num > 100)) {
+  setError("Marks must be between 0 and 100");
+} else {
+  setError("");
+}
+
+const copy = [...currentMarks];
+copy[i] = val;
+setCurrentMarks(copy);
+
+};
+
+const submitStudent = () => { setError("");
+
+if (!name || !roll) return setError("Enter name and roll");
+
+if (students.find(s => String(s.roll) === String(roll))) {
+  return setError("Student already exists (duplicate roll)");
+}
 
 let fail = false;
 let total = 0;
 let gpSum = 0;
 
-const marksNum = currentMarks.map((m) => Number(m));
+const marksNum = currentMarks.map(m => Number(m));
 
-marksNum.forEach((m) => {
+for (let m of marksNum) {
+  if (m < 0 || m > 100) {
+    return setError("Marks must be between 0 and 100");
+  }
   if (m < 33) fail = true;
   total += m;
   gpSum += getGP(m);
-});
+}
 
 const gpa = fail ? 0 : gpSum / marksNum.length;
 
@@ -55,7 +76,7 @@ setCurrentMarks(Array(Number(subjectCount)).fill(""));
 
 };
 
-const searchStudent = () => { const index = students.findIndex(s => String(s.roll) === String(searchRoll)); if (index === -1) return alert("Student not found"); setViewIndex(index); };
+const searchStudent = () => { const index = students.findIndex(s => String(s.roll) === String(searchRoll)); if (index === -1) return setError("Student not found"); setViewIndex(index); };
 
 const getMeritList = () => { return [...students] .sort((a, b) => { if (b.gpa !== a.gpa) return b.gpa - a.gpa; if (b.total !== a.total) return b.total - a.total; return a.roll - b.roll; }) .map((s, i) => ({ ...s, rank: i + 1 })); };
 
@@ -98,6 +119,12 @@ return ( <div style={{padding:20,background:"#0f172a",color:"white",minHeight:"1
   ) : (
     <div>
 
+      {error && (
+        <div style={{color:"red",marginBottom:10,fontWeight:"bold"}}>
+          ⚠ {error}
+        </div>
+      )}
+
       {/* INPUT */}
       <div style={{padding:10,background:"#111827",borderRadius:10}}>
         <h3>Enter Student</h3>
@@ -124,7 +151,7 @@ return ( <div style={{padding:20,background:"#0f172a",color:"white",minHeight:"1
       <div style={{marginTop:20,padding:15,background:"#0b1220",borderRadius:10}}>
         <h2>Individual Result</h2>
         {current ? (
-          <div>
+          <div style={{transition:"all 0.4s ease"}}>
             <h3>{current.name} (Roll {current.roll})</h3>
             <p>Total: {current.total}</p>
             <p>GPA: {current.gpa}</p>
@@ -149,32 +176,28 @@ return ( <div style={{padding:20,background:"#0f172a",color:"white",minHeight:"1
       <div style={{marginTop:20,padding:15,background:"#0b1220",borderRadius:10}}>
         <h2>🏆 Merit List</h2>
 
-        {merit.length === 0 ? (
-          <p>No students yet</p>
-        ) : (
-          <table style={{width:"100%",borderCollapse:"collapse"}}>
-            <thead>
-              <tr>
-                <th style={{border:"1px solid gray"}}>Rank</th>
-                <th style={{border:"1px solid gray"}}>Name</th>
-                <th style={{border:"1px solid gray"}}>Roll</th>
-                <th style={{border:"1px solid gray"}}>GPA</th>
-                <th style={{border:"1px solid gray"}}>Total</th>
+        <table style={{width:"100%",borderCollapse:"collapse",animation:"fadeIn 0.5s ease"}}>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Roll</th>
+              <th>GPA</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {merit.map(s=> (
+              <tr key={s.id} style={{transition:"all 0.3s ease"}}>
+                <td>{s.rank}</td>
+                <td>{s.name}</td>
+                <td>{s.roll}</td>
+                <td>{s.gpa}</td>
+                <td>{s.total}</td>
               </tr>
-            </thead>
-            <tbody>
-              {merit.map(s=> (
-                <tr key={s.id}>
-                  <td style={{border:"1px solid gray"}}>{s.rank}</td>
-                  <td style={{border:"1px solid gray"}}>{s.name}</td>
-                  <td style={{border:"1px solid gray"}}>{s.roll}</td>
-                  <td style={{border:"1px solid gray"}}>{s.gpa}</td>
-                  <td style={{border:"1px solid gray"}}>{s.total}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
       </div>
 
     </div>
