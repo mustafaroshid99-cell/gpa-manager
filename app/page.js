@@ -2,9 +2,11 @@
 
 export default function Home() { const [className, setClassName] = useState(""); const [subjectCount, setSubjectCount] = useState(""); const [started, setStarted] = useState(false);
 
-const [name, setName] = useState(""); const [roll, setRoll] = useState("");
+const [name, setName] = useState(""); const [roll, setRoll] = useState(""); const [searchRoll, setSearchRoll] = useState("");
 
 const [currentMarks, setCurrentMarks] = useState([]); const [students, setStudents] = useState([]);
+
+const [viewIndex, setViewIndex] = useState(-1);
 
 const getGP = (m) => { if (m >= 80) return 5.0; else if (m >= 70) return 4.0; else if (m >= 60) return 3.5; else if (m >= 50) return 3.0; else if (m >= 40) return 2.0; else if (m >= 33) return 1.0; else return 0.0; };
 
@@ -41,7 +43,9 @@ const student = {
   status: fail ? "FAIL" : "PASS",
 };
 
-setStudents([...students, student]);
+const updated = [...students, student];
+setStudents(updated);
+setViewIndex(updated.length - 1);
 
 setName("");
 setRoll("");
@@ -49,25 +53,20 @@ setCurrentMarks(Array(Number(subjectCount)).fill(""));
 
 };
 
+const searchStudent = () => { const index = students.findIndex((s) => String(s.roll) === String(searchRoll)); if (index === -1) { alert("Student not found"); } else { setViewIndex(index); } };
+
 const stats = () => { if (students.length === 0) return null;
-
-const sorted = [...students].sort((a, b) => b.gpa - a.gpa);
-
-const avg = students.reduce((a, b) => a + b.gpa, 0) / students.length;
 
 const pass = students.filter((s) => s.status === "PASS").length;
 const fail = students.length - pass;
+const passRate = ((pass / students.length) * 100).toFixed(2);
 
 const count = (g) => students.filter((s) => s.grade === g).length;
 
-const passPercent = ((pass / students.length) * 100).toFixed(2);
-
 return {
-  sorted,
-  avg: avg.toFixed(2),
   pass,
   fail,
-  passPercent,
+  passRate,
   aPlus: count("A+"),
   a: count("A"),
   aMinus: count("A-"),
@@ -79,101 +78,98 @@ return {
 
 };
 
-const data = stats();
+const data = stats(); const current = students[viewIndex];
 
-return ( <div style={{ padding: 20, color: "white", background: "#0f172a", minHeight: "100vh" }}> {!started ? ( <div> <h1>GPA Manager Pro</h1>
+return ( <div style={{ padding: 20, color: "white", background: "linear-gradient(135deg,#0f172a,#1e293b)", minHeight: "100vh", fontFamily: "sans-serif" }}>
 
-<input
-        placeholder="Class Name"
-        value={className}
-        onChange={(e) => setClassName(e.target.value)}
-      />
+{!started ? (
+    <div>
+      <h1>GPA Manager Pro</h1>
 
+      <input placeholder="Class Name" value={className}
+        onChange={(e) => setClassName(e.target.value)} />
       <br /><br />
 
-      <input
-        type="number"
-        placeholder="Number of Subjects"
+      <input type="number" placeholder="Subjects"
         value={subjectCount}
-        onChange={(e) => setSubjectCount(e.target.value)}
-      />
-
+        onChange={(e) => setSubjectCount(e.target.value)} />
       <br /><br />
 
       <button onClick={start}>Start</button>
     </div>
   ) : (
     <div>
-      <h2>{className}</h2>
 
-      <h3>Student Info</h3>
+      {/* INPUT */}
+      <div style={{ padding: 10, background: "#111827", borderRadius: 10 }}>
+        <h3>Enter Student</h3>
 
-      <input
-        placeholder="Student Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
+        <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <input placeholder="Roll" value={roll} onChange={(e) => setRoll(e.target.value)} />
 
-      <input
-        placeholder="Roll"
-        value={roll}
-        onChange={(e) => setRoll(e.target.value)}
-      />
-
-      <h3>Marks</h3>
-
-      {currentMarks.map((m, i) => (
-        <div key={i}>
-          <input
+        {currentMarks.map((m, i) => (
+          <input key={i}
             type="number"
-            placeholder={`Subject ${i + 1}`}
+            placeholder={`Sub ${i + 1}`}
             value={m}
             onChange={(e) => updateMark(i, e.target.value)}
           />
+        ))}
+
+        <button onClick={submitStudent}>Add Student</button>
+      </div>
+
+      {/* SEARCH */}
+      <div style={{ marginTop: 15, padding: 10, background: "#0b1220", borderRadius: 10 }}>
+        <h3>Search Student</h3>
+        <input
+          placeholder="Enter Roll"
+          value={searchRoll}
+          onChange={(e) => setSearchRoll(e.target.value)}
+        />
+        <button onClick={searchStudent}>Search</button>
+      </div>
+
+      {/* INDIVIDUAL RESULT */}
+      <div style={{ marginTop: 20, padding: 15, background: "#0b1220", borderRadius: 10 }}>
+        <h2>Individual Result</h2>
+
+        {current ? (
+          <div>
+            <h3>{current.name} (Roll {current.roll})</h3>
+            <p>Total: {current.total}</p>
+            <p>GPA: {current.gpa}</p>
+            <p>Grade: {current.grade}</p>
+            <p>Status: {current.status}</p>
+          </div>
+        ) : (
+          <p>No student selected</p>
+        )}
+
+        <div style={{ marginTop: 10 }}>
+          <button disabled={viewIndex <= 0} onClick={() => setViewIndex(viewIndex - 1)}>Prev</button>
+          <button disabled={viewIndex >= students.length - 1} onClick={() => setViewIndex(viewIndex + 1)}>Next</button>
         </div>
-      ))}
+      </div>
 
-      <br />
-      <button onClick={submitStudent}>Add Student</button>
-
-      <hr />
-
-      <h2>Individual Results</h2>
-
-      {students.map((s, i) => (
-        <div key={s.id} style={{ border: "1px solid gray", padding: 10, marginBottom: 10 }}>
-          <h4>{s.name} (Roll: {s.roll})</h4>
-          <p>Total Marks: {s.total}</p>
-          <p>GPA: {s.gpa}</p>
-          <p>Grade: {s.grade}</p>
-          <p>Status: {s.status}</p>
-        </div>
-      ))}
-
-      <hr />
-
+      {/* SUMMARY */}
       {data && (
-        <div>
-          <h2>Class Summary</h2>
+        <div style={{ marginTop: 20, padding: 15, background: "#111827", borderRadius: 10 }}>
+          <h2>Summary</h2>
 
-          <p>Average GPA: {data.avg}</p>
-          <p>Passed: {data.pass} | Failed: {data.fail}</p>
-          <p>Pass Percentage: {data.passPercent}%</p>
+          <p>Pass: {data.pass}</p>
+          <p>Fail: {data.fail}</p>
+          <p>Pass Rate: {data.passRate}%</p>
 
-          <h3>Grade Count</h3>
+          <h3>Grades</h3>
           <p>A+: {data.aPlus} | A: {data.a} | A-: {data.aMinus}</p>
           <p>B: {data.b} | C: {data.c} | D: {data.d} | F: {data.f}</p>
-
-          <h3>Merit List</h3>
-          {data.sorted.map((s, i) => (
-            <div key={s.id}>
-              #{i + 1} → {s.name} (Roll: {s.roll}) → GPA {s.gpa} ({s.grade})
-            </div>
-          ))}
         </div>
       )}
+
     </div>
   )}
+
 </div>
 
 ); }
