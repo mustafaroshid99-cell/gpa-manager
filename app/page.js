@@ -1,149 +1,144 @@
-"use client";
-import { useState } from "react";
+"use client"; import { useState } from "react";
 
-export default function Home() {
-  const [className, setClassName] = useState("");
-  const [subjectCount, setSubjectCount] = useState("");
-  const [started, setStarted] = useState(false);
+export default function Home() { const [className, setClassName] = useState(""); const [subjectCount, setSubjectCount] = useState(""); const [started, setStarted] = useState(false);
 
-  const [currentMarks, setCurrentMarks] = useState([]);
-  const [students, setStudents] = useState([]);
+const [currentMarks, setCurrentMarks] = useState([]); const [students, setStudents] = useState([]);
 
-  const getGP = (m) => {
-    if (m >= 80) return 5.0;
-    else if (m >= 70) return 4.0;
-    else if (m >= 60) return 3.5;
-    else if (m >= 50) return 3.0;
-    else if (m >= 40) return 2.0;
-    else if (m >= 33) return 1.0;
-    else return 0.0;
-  };
+const getGP = (m) => { if (m >= 80) return 5.0; else if (m >= 70) return 4.0; else if (m >= 60) return 3.5; else if (m >= 50) return 3.0; else if (m >= 40) return 2.0; else if (m >= 33) return 1.0; else return 0.0; };
 
-  const getGrade = (gpa) => {
-    if (gpa === 5.0) return "A+";
-    else if (gpa >= 4.0) return "A";
-    else if (gpa >= 3.5) return "A-";
-    else if (gpa >= 3.0) return "B";
-    else if (gpa >= 2.0) return "C";
-    else if (gpa >= 1.0) return "D";
-    else return "F";
-  };
+const getGrade = (gpa) => { if (gpa === 5.0) return "A+"; else if (gpa >= 4.0) return "A"; else if (gpa >= 3.5) return "A-"; else if (gpa >= 3.0) return "B"; else if (gpa >= 2.0) return "C"; else if (gpa >= 1.0) return "D"; else return "F"; };
 
-  const start = () => {
-    if (!className || !subjectCount) return alert("Fill all fields");
-    setCurrentMarks(Array(Number(subjectCount)).fill(""));
-    setStarted(true);
-  };
+const start = () => { if (!className || !subjectCount) return alert("Fill all fields"); setCurrentMarks(Array(Number(subjectCount)).fill("")); setStarted(true); };
 
-  const updateMark = (i, val) => {
-    const copy = [...currentMarks];
-    copy[i] = val;
-    setCurrentMarks(copy);
-  };
+const updateMark = (i, val) => { const copy = [...currentMarks]; copy[i] = val; setCurrentMarks(copy); };
 
-  const submitStudent = () => {
-    let fail = false;
-    let sum = 0;
-    let total = 0;
+const submitStudent = () => { let fail = false; let total = 0; let gpSum = 0;
 
-    for (let m of currentMarks) {
-      const num = Number(m);
-      if (num < 33) fail = true;
-      total += num;
-      sum += getGP(num);
-    }
+const marksNum = currentMarks.map((m) => Number(m));
 
-    const gpa = fail ? 0 : sum / currentMarks.length;
+marksNum.forEach((m) => {
+  if (m < 33) fail = true;
+  total += m;
+  gpSum += getGP(m);
+});
 
-    const student = {
-      marks: [...currentMarks],
-      total,
-      gpa: Number(gpa.toFixed(2)),
-      grade: getGrade(gpa),
-      status: fail ? "FAIL" : "PASS",
-    };
+const gpa = fail ? 0 : gpSum / marksNum.length;
 
-    setStudents([...students, student]);
-    setCurrentMarks(Array(Number(subjectCount)).fill(""));
-  };
+const student = {
+  id: Date.now(),
+  marks: marksNum,
+  total,
+  gpa: Number(gpa.toFixed(2)),
+  grade: getGrade(gpa),
+  status: fail ? "FAIL" : "PASS",
+};
 
-  const stats = () => {
-    if (students.length === 0) return null;
+setStudents([...students, student]);
+setCurrentMarks(Array(Number(subjectCount)).fill(""));
 
-    const sorted = [...students].sort((a, b) => b.gpa - a.gpa);
-    const avg =
-      students.reduce((a, b) => a + b.gpa, 0) / students.length;
+};
 
-    const pass = students.filter((s) => s.status === "PASS").length;
-    const fail = students.length - pass;
-    const aPlus = students.filter((s) => s.grade === "A+").length;
+const stats = () => { if (students.length === 0) return null;
 
-    return { sorted, avg: avg.toFixed(2), pass, fail, aPlus };
-  };
+const sorted = [...students].sort((a, b) => b.gpa - a.gpa);
 
-  const data = stats();
+const avg = students.reduce((a, b) => a + b.gpa, 0) / students.length;
 
-  return (
-    <div style={{ padding: 20, color: "white", background: "#0f172a", minHeight: "100vh" }}>
-      {!started ? (
-        <div>
-          <h1>GPA Manager</h1>
+const pass = students.filter((s) => s.status === "PASS").length;
+const fail = students.length - pass;
 
-          <input
-            placeholder="Class Name"
-            value={className}
-            onChange={(e) => setClassName(e.target.value)}
-          />
+const gradeCount = (g) => students.filter((s) => s.grade === g).length;
 
-          <br /><br />
+return {
+  sorted,
+  avg: avg.toFixed(2),
+  pass,
+  fail,
+  aPlus: gradeCount("A+"),
+  a: gradeCount("A"),
+  aMinus: gradeCount("A-"),
+};
 
+};
+
+const data = stats();
+
+return ( <div style={{ padding: 20, color: "white", background: "#0f172a", minHeight: "100vh" }}> {!started ? ( <div> <h1>GPA Manager Pro</h1>
+
+<input
+        placeholder="Class Name"
+        value={className}
+        onChange={(e) => setClassName(e.target.value)}
+      />
+
+      <br /><br />
+
+      <input
+        type="number"
+        placeholder="Number of Subjects"
+        value={subjectCount}
+        onChange={(e) => setSubjectCount(e.target.value)}
+      />
+
+      <br /><br />
+
+      <button onClick={start}>Start</button>
+    </div>
+  ) : (
+    <div>
+      <h2>{className}</h2>
+
+      <h3>Enter Marks</h3>
+
+      {currentMarks.map((m, i) => (
+        <div key={i}>
           <input
             type="number"
-            placeholder="Number of Subjects"
-            value={subjectCount}
-            onChange={(e) => setSubjectCount(e.target.value)}
+            placeholder={`Subject ${i + 1}`}
+            value={m}
+            onChange={(e) => updateMark(i, e.target.value)}
           />
-
-          <br /><br />
-
-          <button onClick={start}>Start</button>
         </div>
-      ) : (
-        <div>
-          <h2>{className}</h2>
+      ))}
 
-          {currentMarks.map((m, i) => (
-            <div key={i}>
-              <input
-                type="number"
-                placeholder={`Subject ${i + 1}`}
-                value={m}
-                onChange={(e) => updateMark(i, e.target.value)}
-              />
+      <br />
+      <button onClick={submitStudent}>Add Student</button>
+
+      <hr />
+
+      <h2>Individual Results</h2>
+
+      {students.map((s, i) => (
+        <div key={s.id} style={{ border: "1px solid gray", padding: 10, marginBottom: 10 }}>
+          <h4>Student #{i + 1}</h4>
+          <p>Total Marks: {s.total}</p>
+          <p>GPA: {s.gpa}</p>
+          <p>Grade: {s.grade}</p>
+          <p>Status: {s.status}</p>
+        </div>
+      ))}
+
+      <hr />
+
+      {data && (
+        <div>
+          <h2>Class Summary</h2>
+
+          <p>Average GPA: {data.avg}</p>
+          <p>Passed: {data.pass} | Failed: {data.fail}</p>
+
+          <p>A+: {data.aPlus} | A: {data.a} | A-: {data.aMinus}</p>
+
+          <h3>Merit List</h3>
+          {data.sorted.map((s, i) => (
+            <div key={s.id}>
+              #{i + 1} → GPA {s.gpa} ({s.grade})
             </div>
           ))}
-
-          <br />
-          <button onClick={submitStudent}>Add Student</button>
-
-          <h3>Total Students: {students.length}</h3>
-
-          {data && (
-            <div>
-              <h3>Average GPA: {data.avg}</h3>
-              <h3>Pass: {data.pass} | Fail: {data.fail}</h3>
-              <h3>A+: {data.aPlus}</h3>
-
-              <h3>Merit List:</h3>
-              {data.sorted.map((s, i) => (
-                <div key={i}>
-                  #{i + 1} → GPA: {s.gpa} ({s.grade})
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>
-  );
-  }
+  )}
+</div>
+
+); }
